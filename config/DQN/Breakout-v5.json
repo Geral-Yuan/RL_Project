@@ -1,0 +1,16 @@
+{
+    "dqn_params": {
+        "dqn_type": "DQN",
+        "is_cnn": true,
+        "gamma": 0.99,
+        "learning_rate": 0.0005,
+        "batch_size": 32,
+        "update_cycle": 25
+    },
+    "initial_epsilon": 0.5,
+    "epsilon_decay": 0.998,
+    "min_epsilon": 0.1,
+    "num_episodes": 1000,
+    "replay_buffer_capacity": 10000,
+    "training_start_size": 500
+}
