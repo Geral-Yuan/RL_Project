@@ -3,10 +3,10 @@ import torch
 from tqdm import tqdm
 from time import time
 import swanlab
-from pathlib import Path
 import imageio.v2 as imageio
 
 from utils import *
+from test import eval_agent
 
 def train_off_policy_agent(args, config, TIMESTAMP, env, agent):
     if args.store_gif:
@@ -21,7 +21,7 @@ def train_off_policy_agent(args, config, TIMESTAMP, env, agent):
         episode_return = 0
 
         while not done:
-            action = agent.take_action(state)
+            action = agent.select_action(state)
             next_state, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
             replay_buffer.add(state, action, reward, next_state, done)
@@ -49,19 +49,8 @@ def train_off_policy_agent(args, config, TIMESTAMP, env, agent):
             agent.tau = max(config["min_tau"], agent.tau * config["tau_decay"],)
 
         if args.store_gif and (i + 1) % vis_interval == 0:
-            eval_env = make_env(args.env_name, eval=True)
-            eval_state, _ = eval_env.reset()
-            frames, done = [], False
-        
-            with torch.no_grad():
-                while not done:
-                    frames.append(eval_env.render())
-                    action = agent.take_action(eval_state)
-                    eval_state, _, terminated, truncated, _ = eval_env.step(action)
-                    done = terminated or truncated
-            eval_env.close()
-            gif_path = gif_path = video_dir / f"ep{i+1:04d}.gif"
-            imageio.mimsave(gif_path, frames, fps=30)
+            gif_path = video_dir / f"ep{i+1:04d}.gif"
+            eval_agent(agent, args.env_name, gif_path=gif_path)
             
     end_time = time()
     elapsed_time = end_time - start_time
@@ -79,6 +68,13 @@ def train_off_policy_agent(args, config, TIMESTAMP, env, agent):
     print("Min Return:", min_return)
     print("Mean:", mean)
     print("Standard Deviation:", std)
+    
+    if args.save_ckpt:
+        if args.save_ckpt_path is None:
+            args.save_ckpt_path = f"ckpt/{args.env_name}/{args.model_type}.pt"
+        agent.save_ckpt(args.save_ckpt_path)
+        
+    return return_list
 
 def train_DQN(args, config, device, TIMESTAMP):
     env = make_env(args.env_name, eval=False)        
@@ -91,7 +87,11 @@ def train_DQN(args, config, device, TIMESTAMP):
     from model.DQN import DQN
     agent = DQN(**dqn_params)
     
-    train_off_policy_agent(args, config, TIMESTAMP, env, agent)
+    return_list = train_off_policy_agent(args, config, TIMESTAMP, env, agent)
+    
+    env.close()
+    
+    return return_list
     
 
 def train_PPO(args, config, device, TIMESTAMP):
@@ -101,7 +101,6 @@ def train_PPO(args, config, device, TIMESTAMP):
     ppo_params["state_dim"] = env.observation_space.shape[0]
     ppo_params["action_dim"] = env.action_space.shape[0]
     ppo_params["device"] = config.get("device", device)
-    action_scale = ppo_params.get("action_scale", 1.0)
     
     from model.PPO import PPO
     agent = PPO(**ppo_params)
@@ -119,7 +118,6 @@ def train_PPO(args, config, device, TIMESTAMP):
         done = False
         while not done:
             action = agent.select_action(state)
-            action = action.clip(-action_scale, action_scale)
             next_state, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
             states.append(state)
@@ -140,20 +138,8 @@ def train_PPO(args, config, device, TIMESTAMP):
             swanlab.log({"return": episode_return, "avg_return": avg_return, "actor_loss": actor_loss, "critic_loss": critic_loss})
         
         if args.store_gif and (i + 1) % vis_interval == 0:
-            eval_env = make_env(args.env_name, eval=True)
-            eval_state, _ = eval_env.reset()
-            frames, done = [], False
-            
-            with torch.no_grad():
-                while not done:
-                    frames.append(eval_env.render())
-                    action = agent.select_action(eval_state)
-                    action = action.clip(-action_scale, action_scale)
-                    eval_state, _, terminated, truncated, _ = eval_env.step(action)
-                    done = terminated or truncated
-            eval_env.close()
             gif_path = video_dir / f"ep{i+1:04d}.gif"
-            imageio.mimsave(gif_path, frames, fps=30)
+            eval_agent(agent, args.env_name, gif_path=gif_path)
         
     end_time = time()
     elapsed_time = end_time - start_time
@@ -172,7 +158,14 @@ def train_PPO(args, config, device, TIMESTAMP):
     print("Mean:", mean)
     print("Standard Deviation:", std)
     
+    if args.save_ckpt:
+        if args.save_ckpt_path is None:
+            args.save_ckpt_path = f"ckpt/{args.env_name}/{args.model_type}.pt"
+        agent.save_ckpt(args.save_ckpt_path)
+    
     env.close()
+    
+    return return_list
     
 def train_DDPG(args, config, device, TIMESTAMP):
     env = make_env(args.env_name, eval=False)
@@ -185,6 +178,8 @@ def train_DDPG(args, config, device, TIMESTAMP):
     
     from model.DDPG import DDPG
     agent = DDPG(**ddpg_params)
-    train_off_policy_agent(args, config, TIMESTAMP, env, agent)
+    return_list = train_off_policy_agent(args, config, TIMESTAMP, env, agent)
     
-   
+    env.close()
+    
+    return return_list

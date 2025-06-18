@@ -8,19 +8,19 @@ class QNet(nn.Module):
         super(QNet, self).__init__()
         self.is_cnn = is_cnn
         self.conv = nn.Sequential(
-            nn.Conv2d(in_channels=in_channels, out_channels=32, kernel_size=8, stride=4),  # -> (batch, 32, 20, 20)
+            nn.Conv2d(in_channels=in_channels, out_channels=16, kernel_size=8, stride=4),  # -> (batch, 32, 20, 20)
             nn.ReLU(),
-            nn.Conv2d(32, 64, kernel_size=4, stride=2),                           # -> (batch, 64, 9, 9)
+            nn.Conv2d(16, 32, kernel_size=4, stride=2),                           # -> (batch, 64, 9, 9)
             nn.ReLU(),
-            # nn.Conv2d(64, 64, kernel_size=3, stride=1),                           # -> (batch, 64, 7, 7)
-            # nn.ReLU()
+            nn.Conv2d(32, 64, kernel_size=3, stride=1),                           # -> (batch, 64, 7, 7)
+            nn.ReLU()
         )
         # self.fc = nn.Sequential(
         #     nn.Linear(in_features=64 * 7 * 7, out_features=512),
         #     nn.ReLU(),
         #     nn.Linear(in_features=512, out_features=action_dim)
         # )
-        self.fc = nn.Linear(in_features=64 * 9 * 9, out_features=action_dim)
+        self.fc = nn.Linear(in_features=64 * 7 * 7, out_features=action_dim)
         self.mlp = nn.Sequential(
             nn.Linear(in_features=128, out_features=256),
             nn.ReLU(),
@@ -50,7 +50,7 @@ class DQN:
         self.step = 0
         self.device = device
         
-    def take_action(self, state):
+    def select_action(self, state):
         if isinstance(state, tuple):
             state = state[0]
         
@@ -87,5 +87,11 @@ class DQN:
         self.step += 1
         
         return ret_loss
+    
+    def save_ckpt(self, path):
+        torch.save(self.QNet.state_dict(), path)
 
+    def load_ckpt(self, path):
+        checkpoint = torch.load(path, map_location=self.device)
+        self.QNet.load_state_dict(checkpoint)
     

@@ -22,7 +22,7 @@ ENV_LIST = {
 }
 
 ALGO_LIST = {
-    "Value-Based": ["DQN", "DoubleDQN", "DuelingDQN"],
+    "Value-Based": ["DQN"],
     "Policy-Based": ["PPO", "DDPG"]
 }
 
@@ -76,6 +76,6 @@ def make_env(env_name, eval=False):
 
 def setup_visualization(args, config, TIMESTAMP):
     vis_interval = config.get("vis_interval", 500)
-    video_dir = Path(f"gif/{args.env_name}/{args.model_type}_{TIMESTAMP}")
+    video_dir = Path(f"gif/train/{args.env_name}/{args.model_type}_{TIMESTAMP}")
     video_dir.mkdir(parents=True, exist_ok=True)
     return video_dir, vis_interval

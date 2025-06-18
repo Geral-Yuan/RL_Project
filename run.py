@@ -4,11 +4,12 @@ import argparse
 import datetime
 import random
 import numpy as np
-
+import pickle
 import os
 import json
 
 from train import *
+from test import test
 
 def main(args):
     random.seed(0)
@@ -16,31 +17,50 @@ def main(args):
     torch.manual_seed(0)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    config_path = f"config/{args.model_type}/{args.env_name}.json"
+    config_path = f"config/{args.env_name}/{args.model_type}.json"
+    
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Configuration file {config_path} does not exist. Please ensure the file is present in the config directory.")
     with open(config_path, "r") as f:
         config = json.load(f)
-        
-    if args.use_swanlab:
-        swanlab.login(api_key=args.swanlab_key)
-        swanlab.init(project="RL_Final_Project", config=config, experiment_name=f"{args.env_name}_{args.model_type}_{TIMESTAMP}")
     
-    if args.model_type in ALGO_LIST["Value-Based"]:
-        train_DQN(args, config, device, TIMESTAMP)
+    if args.train:
+        if args.use_swanlab:
+            swanlab.login(api_key=args.swanlab_key)
+            swanlab.init(project="RL_Final_Project", config=config, experiment_name=f"{args.env_name}_{args.model_type}_{TIMESTAMP}")
         
-    elif args.model_type in ALGO_LIST["Policy-Based"]:
-        if args.model_type == "PPO":
-            train_PPO(args, config, device, TIMESTAMP)
-        elif args.model_type == "DDPG":
-            train_DDPG(args, config, device, TIMESTAMP)
+        if args.model_type in ALGO_LIST["Value-Based"]:
+            train_func = train_DQN
+        elif args.model_type in ALGO_LIST["Policy-Based"]:
+            if args.model_type == "PPO":
+                train_func = train_PPO
+            elif args.model_type == "DDPG":
+                train_func = train_DDPG
+                
+        return_list = train_func(args, config, device, TIMESTAMP)
         
-    
+        os.makedirs(f'results/{args.env_name}', exist_ok=True)
+        with open(f'results/{args.env_name}/{args.model_type}_{TIMESTAMP}.pkl', 'wb') as f:
+            pickle.dump(return_list, f)
+        
+        
+    else:
+        if args.load_ckpt_path is None:
+            args.load_ckpt_path = f"ckpt/{args.env_name}/{args.model_type}.pt"
+        
+        if not os.path.exists(args.load_ckpt_path):
+            raise FileNotFoundError(f"Checkpoint file {args.load_ckpt_path} does not exist. Please ensure the file is present in the ckpt directory.")
+        
+        test(args, config, device)
     
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--env_name', required=True, type=str, choices=ENV_LIST["Atari"] + ENV_LIST["MuJoCo"], help='Environment name')
+    parser.add_argument('--train', action='store_true', help='Train the agent')
+    parser.add_argument('--save_ckpt', action='store_true', help='Save the checkpoint after training')
+    parser.add_argument('--save_ckpt_path', type=str, default=None, help='Path to save the checkpoint file after training (Default: None, will save to ckpt/{env_name}/{model_type}.pt)')
+    parser.add_argument('--load_ckpt_path', type=str, default=None, help='Path to load the checkpoint file for evaluation (Default: None, will load from ckpt/{env_name}/{model_type}.pt)')
     parser.add_argument('--use_swanlab', action='store_true', help='Use SwanLab for logging and visualization')
     parser.add_argument('--swanlab_key', type=str, default=None, help='SwanLab API key')
     # parser.add_argument("--use_wandb", action="store_true", help="Use WandB for logging")

@@ -12,9 +12,9 @@ class Actor(nn.Module):
         super(Actor, self).__init__()
         self.action_scale = action_scale
         self.fc1 = nn.Linear(state_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, hidden_dim*2)
-        self.mean = nn.Linear(hidden_dim*2, action_dim) # predict mean
-        self.std = nn.Linear(hidden_dim*2, action_dim) # predict std
+        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+        self.mean = nn.Linear(hidden_dim, action_dim) # predict mean
+        self.std = nn.Linear(hidden_dim, action_dim) # predict std
         
     def forward(self, x):
         x = torch.relu(self.fc1(x))
@@ -31,12 +31,13 @@ class Critic(nn.Module):
     def __init__(self, state_dim, hidden_dim):
         super(Critic, self).__init__()
         self.fc1 = nn.Linear(state_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, 1) # predict value
+        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+        self.fc3 = nn.Linear(hidden_dim, 1) # predict value
         
     def forward(self, x):
         x = torch.relu(self.fc1(x))
-        value = self.fc2(x)
-        return value
+        x = torch.relu(self.fc2(x))
+        return self.fc3(x)
 
 
 class PPO:
@@ -46,6 +47,7 @@ class PPO:
         self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=actor_lr)
         self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=critic_lr)
         self.num_iter = num_iter
+        self.action_scale = action_scale
         self.gamma = gamma
         self.epsilon = epsilon
         self.device = device
@@ -58,7 +60,7 @@ class PPO:
         mean, std = self.actor(state)
         dist = torch.distributions.Normal(mean, std)
         action = dist.sample()
-        return action.cpu().detach().numpy()
+        return action.clip(-self.action_scale, self.action_scale).cpu().detach().numpy()
     
     
     def gae(self, states, rewards, next_states, dones):
@@ -126,3 +128,13 @@ class PPO:
         
         return np.mean(actor_loss_list), np.mean(critic_loss_list)
         
+    def save_ckpt(self, path):
+        torch.save({
+            'actor': self.actor.state_dict(),
+            'critic': self.critic.state_dict(),
+        }, path)
+        
+    def load_ckpt(self, path):
+        checkpoint = torch.load(path, map_location=self.device)
+        self.actor.load_state_dict(checkpoint['actor'])
+        self.critic.load_state_dict(checkpoint['critic'])

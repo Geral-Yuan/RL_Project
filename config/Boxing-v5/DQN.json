@@ -3,14 +3,14 @@
         "dqn_type": "DQN",
         "is_cnn": true,
         "gamma": 0.98,
-        "learning_rate": 1e-4,
+        "learning_rate": 1e-5,
         "batch_size": 32,
         "update_cycle": 25
     },
     "initial_epsilon": 1.0,
     "epsilon_decay": 0.99,
     "min_epsilon": 0.01,
-    "num_episodes": 4000,
+    "num_episodes": 10000,
     "replay_buffer_capacity": 10000,
     "training_start_size": 500
 }

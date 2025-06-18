@@ -42,7 +42,7 @@ class DDPG:
         self.batch_size = batch_size
         self.device = device
         
-    def take_action(self, state):
+    def select_action(self, state):
         state = torch.tensor(state, dtype=torch.float32).to(self.device)
         action = self.actor(state).cpu().detach().numpy()
         action += np.random.randn(self.action_dim) * self.sigma
@@ -74,3 +74,14 @@ class DDPG:
         
         self.soft_update(self.actor, self.target_actor)
         self.soft_update(self.critic, self.target_critic)
+
+    def save_ckpt(self, path):
+        torch.save({
+            'actor': self.actor.state_dict(),
+            'critic': self.critic.state_dict(),
+        }, path)
+        
+    def load_ckpt(self, path):
+        checkpoint = torch.load(path, map_location=self.device)
+        self.actor.load_state_dict(checkpoint['actor'])
+        self.critic.load_state_dict(checkpoint['critic'])

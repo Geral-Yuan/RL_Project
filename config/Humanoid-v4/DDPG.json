@@ -11,7 +11,7 @@
     "initial_tau": 0.03,
     "tau_decay": 0.999,
     "min_tau": 0.001,
-    "num_episodes": 5000,
+    "num_episodes": 100000,
     "replay_buffer_capacity": 10000,
     "training_start_size": 1000
 }
