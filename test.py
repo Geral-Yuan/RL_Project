@@ -6,19 +6,23 @@ from utils import *
 
 def eval_agent(agent, env_name, gif_path=None):
     eval_env = make_env(env_name, eval=True)
+    eval_env.metadata['render_fps'] = 30
     eval_state, _ = eval_env.reset()
     frames, done = [], False
     
+    episode_return = 0
     with torch.no_grad():
         while not done:
             frames.append(eval_env.render())
             action = agent.select_action(eval_state)
-            eval_state, _, terminated, truncated, _ = eval_env.step(action)
+            eval_state, reward, terminated, truncated, _ = eval_env.step(action)
             done = terminated or truncated
+            episode_return += reward
     eval_env.close()
     if gif_path is not None:
         os.makedirs(os.path.dirname(gif_path), exist_ok=True)
         imageio.mimsave(gif_path, frames, fps=30)
+    return episode_return
 
 def test(args, config, device):
     env = make_env(args.env_name, eval=False)
@@ -33,7 +37,8 @@ def test(args, config, device):
         from model.DQN import DQN
         agent = DQN(**dqn_params)
         agent.load_ckpt(args.load_ckpt_path)
-        
+        print(f"Loaded DQN model from {args.load_ckpt_path}")
+        agent.epsilon = 0.0
         
     elif args.model_type in ALGO_LIST["Policy-Based"]:
         if args.model_type == "PPO":
@@ -45,6 +50,7 @@ def test(args, config, device):
             from model.PPO import PPO
             agent = PPO(**ppo_params)
             agent.load_ckpt(args.load_ckpt_path)
+            print(f"Loaded PPO model from {args.load_ckpt_path}")
             
         elif args.model_type == "DDPG":
             ddpg_params = config["ddpg_params"]
@@ -56,7 +62,10 @@ def test(args, config, device):
             from model.DDPG import DDPG
             agent = DDPG(**ddpg_params)
             agent.load_ckpt(args.load_ckpt_path)
+            print(f"Loaded DDPG model from {args.load_ckpt_path}")
             
-    gif_path = f'gif/test/{args.env_name}/{args.model_type}.gif'
-    eval_agent(agent, args.env_name, gif_path)
+    gif_path = f'gif/test/{args.env_name}/{args.model_type}_{args.timestamp}.gif'
+    episode_return = eval_agent(agent, args.env_name, gif_path)
+    
+    print(f"Tested {args.model_type} on {args.env_name}, Episode Return: {episode_return}")
             

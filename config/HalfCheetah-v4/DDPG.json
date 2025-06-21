@@ -1,7 +1,7 @@
 {
     "ddpg_params": {
         "hidden_dim": 128,
-        "actor_lr": 1e-3,
+        "actor_lr": 1e-4,
         "critic_lr": 1e-3,
         "action_scale": 1.0,
         "sigma": 0.05,

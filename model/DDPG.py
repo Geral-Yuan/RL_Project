@@ -8,22 +8,26 @@ class Actor(nn.Module):
         super(Actor, self).__init__()
         self.action_scale = action_scale
         self.fc1 = nn.Linear(state_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, action_dim)
+        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+        self.fc3 = nn.Linear(hidden_dim, action_dim)
         
     def forward(self, x):
         x = torch.relu(self.fc1(x))
-        return torch.tanh(self.fc2(x)) * self.action_scale
+        x = torch.relu(self.fc2(x))
+        return torch.tanh(self.fc3(x)) * self.action_scale
     
 class Critic(nn.Module):
     def __init__(self, state_dim, hidden_dim, action_dim):
         super(Critic, self).__init__()
         self.fc1 = nn.Linear(state_dim + action_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, 1)
+        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+        self.fc3 = nn.Linear(hidden_dim, 1)
     
     def forward(self, state, action):
         x = torch.cat([state, action], dim=-1)
         x = torch.relu(self.fc1(x))
-        return self.fc2(x)
+        x = torch.relu(self.fc2(x))
+        return self.fc3(x)
     
 class DDPG:
     def __init__(self, state_dim, action_dim, hidden_dim=64, actor_lr=1e-4, critic_lr=1e-3, action_scale=1.0, sigma=0.01, tau=0.005, gamma=0.98, batch_size=32, device='cpu'):

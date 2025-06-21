@@ -8,9 +8,9 @@ import imageio.v2 as imageio
 from utils import *
 from test import eval_agent
 
-def train_off_policy_agent(args, config, TIMESTAMP, env, agent):
+def train_off_policy_agent(args, config, env, agent):
     if args.store_gif:
-        video_dir, vis_interval = setup_visualization(args, config, TIMESTAMP)
+        video_dir, vis_interval = setup_visualization(args, config)
     return_list = []
     replay_buffer = ReplayBuffer(config["replay_buffer_capacity"])
     pbar = tqdm(range(config["num_episodes"]), desc=f"Training {args.model_type} on {args.env_name}", unit="episodes")
@@ -73,10 +73,11 @@ def train_off_policy_agent(args, config, TIMESTAMP, env, agent):
         if args.save_ckpt_path is None:
             args.save_ckpt_path = f"ckpt/{args.env_name}/{args.model_type}.pt"
         agent.save_ckpt(args.save_ckpt_path)
+        print(f"Checkpoint of {args.model_type} on {args.env_name} saved to {args.save_ckpt_path}")
         
     return return_list
 
-def train_DQN(args, config, device, TIMESTAMP):
+def train_DQN(args, config, device):
     env = make_env(args.env_name, eval=False)        
     dqn_params = config["dqn_params"]
     dqn_params["in_channels"] = env.observation_space.shape[0]
@@ -87,14 +88,14 @@ def train_DQN(args, config, device, TIMESTAMP):
     from model.DQN import DQN
     agent = DQN(**dqn_params)
     
-    return_list = train_off_policy_agent(args, config, TIMESTAMP, env, agent)
+    return_list = train_off_policy_agent(args, config, env, agent)
     
     env.close()
     
     return return_list
     
 
-def train_PPO(args, config, device, TIMESTAMP):
+def train_PPO(args, config, device):
     env = make_env(args.env_name, eval=False)
     
     ppo_params = config["ppo_params"]
@@ -106,7 +107,7 @@ def train_PPO(args, config, device, TIMESTAMP):
     agent = PPO(**ppo_params)
     
     if args.store_gif:
-        video_dir, vis_interval = setup_visualization(args, config, TIMESTAMP)
+        video_dir, vis_interval = setup_visualization(args, config)
     
     return_list = []
     pbar = tqdm(range(config["num_episodes"]), desc=f"Training {args.model_type} on {args.env_name}", unit="episode")
@@ -167,7 +168,7 @@ def train_PPO(args, config, device, TIMESTAMP):
     
     return return_list
     
-def train_DDPG(args, config, device, TIMESTAMP):
+def train_DDPG(args, config, device):
     env = make_env(args.env_name, eval=False)
     
     ddpg_params = config["ddpg_params"]
@@ -178,7 +179,7 @@ def train_DDPG(args, config, device, TIMESTAMP):
     
     from model.DDPG import DDPG
     agent = DDPG(**ddpg_params)
-    return_list = train_off_policy_agent(args, config, TIMESTAMP, env, agent)
+    return_list = train_off_policy_agent(args, config, env, agent)
     
     env.close()
     

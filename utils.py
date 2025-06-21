@@ -74,8 +74,8 @@ def make_env(env_name, eval=False):
         env = gym.make(env_name, render_mode="rgb_array" if eval else None)
     return env
 
-def setup_visualization(args, config, TIMESTAMP):
+def setup_visualization(args, config):
     vis_interval = config.get("vis_interval", 500)
-    video_dir = Path(f"gif/train/{args.env_name}/{args.model_type}_{TIMESTAMP}")
+    video_dir = Path(f"gif/train/{args.env_name}/{args.model_type}_{args.timestamp}")
     video_dir.mkdir(parents=True, exist_ok=True)
     return video_dir, vis_interval

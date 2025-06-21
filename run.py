@@ -26,8 +26,12 @@ def main(args):
     
     if args.train:
         if args.use_swanlab:
+            merged_config = {
+                **config,
+                **vars(args)
+            }
             swanlab.login(api_key=args.swanlab_key)
-            swanlab.init(project="RL_Final_Project", config=config, experiment_name=f"{args.env_name}_{args.model_type}_{TIMESTAMP}")
+            swanlab.init(project="RL_Final_Project", config=merged_config, experiment_name=f"{args.env_name}_{args.model_type}_{args.timestamp}")
         
         if args.model_type in ALGO_LIST["Value-Based"]:
             train_func = train_DQN
@@ -37,10 +41,10 @@ def main(args):
             elif args.model_type == "DDPG":
                 train_func = train_DDPG
                 
-        return_list = train_func(args, config, device, TIMESTAMP)
+        return_list = train_func(args, config, device)
         
         os.makedirs(f'results/{args.env_name}', exist_ok=True)
-        with open(f'results/{args.env_name}/{args.model_type}_{TIMESTAMP}.pkl', 'wb') as f:
+        with open(f'results/{args.env_name}/{args.model_type}_{args.timestamp}.pkl', 'wb') as f:
             pickle.dump(return_list, f)
         
         
@@ -68,10 +72,10 @@ if __name__ == "__main__":
     parser.add_argument("--model_type", type=str, default=None, choices=["DQN", "DoubleDQN", "DuelingDQN", "PPO", "DDPG"], help="Type of model to use (default: None, which will use DQN for Atari and PPO for MuJoCo)")
     # parser.add_argument("--max_steps", type=int, default=None, help="Max steps per episode")
     parser.add_argument("--store_gif", action="store_true", help="Store GIFs of episodes")
+    TIMESTAMP = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    parser.add_argument("--timestamp", type=str, default=TIMESTAMP, help="Timestamp for the run (default: current time)")
     
     args = parser.parse_args()
-    
-    TIMESTAMP = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     
     if args.model_type is None:
         if args.env_name in ENV_LIST["Atari"]:
@@ -84,6 +88,6 @@ if __name__ == "__main__":
     
     # if args.use_wandb:
     #     wandb.login(key=args.wandb_key)
-    #     wandb.init(project="RL Final Project", config=args, name=f"{args.env_name}_{args.model_type}_{TIMESTAMP}")
+    #     wandb.init(project="RL Final Project", config=args, name=f"{args.env_name}_{args.model_type}_{args.timestamp}")
     
     main(args)
