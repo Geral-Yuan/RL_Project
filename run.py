@@ -7,6 +7,7 @@ import numpy as np
 import pickle
 import os
 import json
+import torch
 
 from train import *
 from test import test

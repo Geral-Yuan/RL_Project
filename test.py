@@ -6,7 +6,7 @@ from utils import *
 
 def eval_agent(agent, env_name, gif_path=None):
     eval_env = make_env(env_name, eval=True)
-    eval_env.metadata['render_fps'] = 30
+    # eval_env.metadata['render_fps'] = 30
     eval_state, _ = eval_env.reset()
     frames, done = [], False
     
@@ -56,7 +56,6 @@ def test(args, config, device):
             ddpg_params = config["ddpg_params"]
             ddpg_params["state_dim"] = env.observation_space.shape[0]
             ddpg_params["action_dim"] = env.action_space.shape[0]
-            ddpg_params["tau"] = config.get("initial_tau", 0.3)
             ddpg_params["device"] = config.get("device", device)
             
             from model.DDPG import DDPG

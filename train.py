@@ -1,9 +1,7 @@
 import numpy as np
-import torch
 from tqdm import tqdm
 from time import time
 import swanlab
-import imageio.v2 as imageio
 
 from utils import *
 from test import eval_agent
@@ -39,14 +37,16 @@ def train_off_policy_agent(args, config, env, agent):
         if args.use_swanlab:
             if "epsilon_decay" in config:
                 swanlab.log({"epsilon": agent.epsilon, "return": episode_return, "avg_return": avg_return, "loss": loss})
-            elif "tau_decay" in config:
-                swanlab.log({"tau": agent.tau, "return": episode_return, "avg_return": avg_return})
+            else:
+                swanlab.log({"return": episode_return, "avg_return": avg_return})
+            # elif "tau_decay" in config:
+            #     swanlab.log({"tau": agent.tau, "return": episode_return, "avg_return": avg_return})
             
 
         if "epsilon_decay" in config:
             agent.epsilon = max(config["min_epsilon"], agent.epsilon * config["epsilon_decay"])
-        elif "tau_decay" in config:
-            agent.tau = max(config["min_tau"], agent.tau * config["tau_decay"],)
+        # elif "tau_decay" in config:
+        #     agent.tau = max(config["min_tau"], agent.tau * config["tau_decay"],)
 
         if args.store_gif and (i + 1) % vis_interval == 0:
             gif_path = video_dir / f"ep{i+1:04d}.gif"
@@ -174,7 +174,6 @@ def train_DDPG(args, config, device):
     ddpg_params = config["ddpg_params"]
     ddpg_params["state_dim"] = env.observation_space.shape[0]
     ddpg_params["action_dim"] = env.action_space.shape[0]
-    ddpg_params["tau"] = config.get("initial_tau", 0.3)
     ddpg_params["device"] = config.get("device", device)
     
     from model.DDPG import DDPG

@@ -4,13 +4,13 @@
         "actor_lr": 1e-4,
         "critic_lr": 1e-4,
         "action_scale": 0.4,
-        "sigma": 0.05,
+        "sigma": 0.1,
+        "tau": 0.01,
         "gamma": 0.98,
-        "batch_size": 64
+        "batch_size": 64,
+        "delay_policy_update": 2,
+        "delay_target_update": 50
     },
-    "initial_tau": 0.03,
-    "tau_decay": 0.999,
-    "min_tau": 0.001,
     "num_episodes": 100000,
     "replay_buffer_capacity": 10000,
     "training_start_size": 1000
