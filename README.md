@@ -72,7 +72,7 @@ The following two figures show the comparison of my DDPG with improving modifica
 
 ### Agent Rendering
 
-<img src='figs/Pong.gif' align='left'>
-<img src='figs/Boxing.gif' align='right'>
-<img src='figs/HalfCheetah.gif'>
-<img src='figs/Ant.gif'>
+<img src='figs/Pong.gif' width=400>
+<img src='figs/Boxing.gif' width=400>
+<img src='figs/HalfCheetah.gif' width=400>
+<img src='figs/Ant.gif' width=400>
