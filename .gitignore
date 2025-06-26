@@ -1,0 +1,9 @@
+.*
+!.gitignore
+*__pycache__
+ckpt
+scripts/*.sh
+wandb
+gif
+results
+utils
