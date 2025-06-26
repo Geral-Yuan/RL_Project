@@ -60,15 +60,21 @@ python main.py --env_name Ant-v4 --train --save_ckpt
 
 The four figures below show the training curves of my DQN agent on Pong and Boxing, and DDPG agent on HalfCheetah and Ant.
 
-![Pong](figs/DQN/Pong.png)
-![Boxing](figs/DQN/Boxing.png)
-![Ant](figs/DDPG/Ant.png)
-![HalfCheetah](figs/DDPG/HalfCheetah.png)
+<p align="center">
+  <img src="figs/DQN/Pong.png" width="45%" />
+  <img src="figs/DQN/Boxing.png" width="45%" />
+</p>
+<p align="center">
+  <img src="figs/DDPG/Ant.png" width="45%" />
+  <img src="figs/DDPG/HalfCheetah.png" width="45%" />
+</p>
 
 The following two figures show the comparison of my DDPG with improving modifications with the original DDPG algorithm on HalfCheetah and Ant environments.
 
-![DDPG HalfCheetah](figs/HalfCheetah/DDPG_comp.png)
-![DDPG Ant](figs/Ant/DDPG_comp.png)
+<p align="center">
+  <img src="figs/HalfCheetah/DDPG_comp.png" width="45%" />
+  <img src="figs/Ant/DDPG_comp.png" width="45%" />
+</p>
 
 ### Agent Rendering
 
