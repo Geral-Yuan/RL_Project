@@ -15,11 +15,6 @@ class QNet(nn.Module):
             nn.Conv2d(32, 64, kernel_size=3, stride=1),                           # -> (batch, 64, 7, 7)
             nn.ReLU()
         )
-        # self.fc = nn.Sequential(
-        #     nn.Linear(in_features=64 * 7 * 7, out_features=512),
-        #     nn.ReLU(),
-        #     nn.Linear(in_features=512, out_features=action_dim)
-        # )
         self.fc = nn.Linear(in_features=64 * 7 * 7, out_features=action_dim)
         self.mlp = nn.Sequential(
             nn.Linear(in_features=128, out_features=256),
@@ -35,12 +30,49 @@ class QNet(nn.Module):
             return self.fc(x)
         return self.mlp(x)
     
+class DuelingQNet(nn.Module):
+    def __init__(self, in_channels, action_dim, is_cnn):
+        super(DuelingQNet, self).__init__()
+        self.is_cnn = is_cnn
+        self.conv = nn.Sequential(
+            nn.Conv2d(in_channels=in_channels, out_channels=16, kernel_size=8, stride=4),  # -> (batch, 32, 20, 20)
+            nn.ReLU(),
+            nn.Conv2d(16, 32, kernel_size=4, stride=2),                           # -> (batch, 64, 9, 9)
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=3, stride=1),                           # -> (batch, 64, 7, 7)
+            nn.ReLU()
+        )
+        self.fc_value = nn.Linear(in_features=64 * 7 * 7, out_features=1)
+        self.fc_advantage = nn.Linear(in_features=64 * 7 * 7, out_features=action_dim)
+        
+        self.fc1 = nn.Linear(in_features=128, out_features=256)
+        self.fc2_value = nn.Linear(in_features=256, out_features=1)
+        self.fc2_advantage = nn.Linear(in_features=256, out_features=action_dim)
+        
+        
+    def forward(self, x):
+        if self.is_cnn:
+            x = x / 255.0
+            x = self.conv(x)
+            x = x.view(x.size(0), -1)
+            value = self.fc_value(x)
+            advantage = self.fc_advantage(x)
+            return value + advantage - advantage.mean(dim=1, keepdim=True)
+        x = torch.relu(self.fc1(x))
+        value = self.fc2_value(x)
+        advantage = self.fc2_advantage(x)
+        return value + advantage - advantage.mean(dim=1, keepdim=True)
+    
 class DQN:
     def __init__(self, dqn_type, is_cnn, in_channels, action_dim, epsilon, gamma, learning_rate, batch_size, update_cycle, device):
         self.dqn_type = dqn_type
         self.action_dim = action_dim
-        self.QNet = QNet(in_channels, action_dim, is_cnn=is_cnn).to(device)
-        self.target_QNet = QNet(in_channels, action_dim, is_cnn=is_cnn).to(device)
+        if dqn_type == "DuelingDQN":
+            self.QNet = DuelingQNet(in_channels, action_dim, is_cnn=is_cnn).to(device)
+            self.target_QNet = DuelingQNet(in_channels, action_dim, is_cnn=is_cnn).to(device)
+        else:
+            self.QNet = QNet(in_channels, action_dim, is_cnn=is_cnn).to(device)
+            self.target_QNet = QNet(in_channels, action_dim, is_cnn=is_cnn).to(device)
         self.target_QNet.load_state_dict(self.QNet.state_dict())
         self.optimizer = torch.optim.Adam(self.QNet.parameters(), lr=learning_rate)
         self.epsilon = epsilon

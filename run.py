@@ -82,7 +82,7 @@ if __name__ == "__main__":
         if args.env_name in ENV_LIST["Atari"]:
             args.model_type = "DQN"
         elif args.env_name in ENV_LIST["MuJoCo"]:
-            args.model_type = "PPO"
+            args.model_type = "DDPG"
     
     if not check_env_algo(args.env_name, args.model_type):
         raise ValueError(f"Environment {args.env_name} is not compatible with model {args.model_type}. Please choose a value-based model for Atari or a policy-based model for MuJoCo.")
@@ -90,5 +90,9 @@ if __name__ == "__main__":
     # if args.use_wandb:
     #     wandb.login(key=args.wandb_key)
     #     wandb.init(project="RL Final Project", config=args, name=f"{args.env_name}_{args.model_type}_{args.timestamp}")
+    
+    import warnings
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    warnings.filterwarnings("ignore", category=UserWarning)
     
     main(args)
