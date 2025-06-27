@@ -1,0 +1,21 @@
+# Core deep learning framework
+torch>=1.13.1
+
+# Atari environments
+gym[atari,accept-rom-license]==0.26.2
+ale-py>=0.7.4
+AutoROM>=0.4.2
+
+# MuJoCo environments
+mujoco==2.2.0
+gym[mujoco]>=0.26.0
+
+# Logging/visualization
+opencv-python
+swanlab
+
+# Other utilities
+numpy==1.24.4
+matplotlib>=3.5.1
+tqdm
+imageio
